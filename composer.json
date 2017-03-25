@@ -1,0 +1,17 @@
+{
+  "name": "vendor_name/package_name",
+  "description": "description_text",
+  "minimum-stability": "stable",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Murat Yeskendirov",
+      "email": "murat.yeskendirov@yandex.ru"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "BIT\\": "./src"
+    }
+  }
+}
