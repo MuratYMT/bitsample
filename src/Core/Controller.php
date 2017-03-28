@@ -1,5 +1,7 @@
 <?php
+
 namespace BIT\Core;
+
 /**
  * Created by PhpStorm.
  * User: murat
@@ -8,5 +10,14 @@ namespace BIT\Core;
  */
 class Controller
 {
+    protected $serviceLocator;
 
+    /**
+     * Controller constructor.
+     * @param ServiceLocator $serviceLocator
+     */
+    public function __construct($serviceLocator)
+    {
+        $this->serviceLocator = $serviceLocator;
+    }
 }

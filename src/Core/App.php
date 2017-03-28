@@ -13,11 +13,21 @@ class App
     const DEFAULT_CONTROLLER = 'index';
     const DEFAULT_ACTION = 'index';
 
-    public static $config;
+    /** @var ServiceLocator */
+    private $serviceLocator;
 
-    public static function run($config = [])
+    private function __construct($serviceLocator)
     {
-        self::$config = $config;
+        $this->serviceLocator = $serviceLocator;
+    }
+
+    public function getServiceLocator()
+    {
+        return $this->serviceLocator;
+    }
+
+    protected function go()
+    {
         $action = '/';
         if (isset($_SERVER['REQUEST_URI'])) {
             $action = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
@@ -37,9 +47,9 @@ class App
             $controllerAction = self::DEFAULT_ACTION;
         }
 
-        self::$_controller = self::checkController($controller);
+        $this->_controller = $this->checkController($controller);
 
-        list($handler, $params) = self::checkAction(self::$_controller, $controllerAction);
+        list($handler, $params) = $this->checkAction($this->_controller, $controllerAction);
         $result = call_user_func_array($handler, $params);
         echo $result;
     }
@@ -59,60 +69,6 @@ class App
         return self::$_view;
     }
 
-    private static $_connection;
-
-    /**
-     * @return Connection
-     */
-    public static function getConnection()
-    {
-        if (self::$_connection === null) {
-            self::$_connection = new Connection();
-        }
-        return self::$_connection;
-    }
-
-    private static $_request;
-
-    /**
-     * @return Request
-     */
-    public static function getRequest()
-    {
-        if (self::$_request === null) {
-            self::$_request = new Request();
-        }
-        return self::$_request;
-    }
-
-    /** @var Session */
-    private static $_session;
-
-    /**
-     * @return Session
-     */
-    public static function getSession()
-    {
-        if (self::$_session === null) {
-            self::$_session = new Session();
-        }
-        return self::$_session;
-    }
-
-    /** @var User */
-    private static $_user;
-
-    /**
-     * @return User
-     */
-    public static function getUser()
-    {
-        if (self::$_user === null) {
-            self::$_user = new User();
-        }
-        return self::$_user;
-    }
-
     /**
      * выполняет проверку наличия экшена в контроллере
      * @param Controller $controller проверяемы контроллер
@@ -120,7 +76,7 @@ class App
      * @return array [$handler, $requestValues]
      * @throws \Exception
      */
-    private static function checkAction($controller, $action)
+    private function checkAction($controller, $action)
     {
         $action = Helper::id2camel($action) . 'Action';
         $refl = new \ReflectionObject($controller);
@@ -138,24 +94,24 @@ class App
                     $reqval[] = null;
                 }
             }
-            self::$_action = $method->getName();
-            return [[$controller, self::$_action], $reqval];
+            $this->_action = $method->getName();
+            return [[$controller, $this->_action], $reqval];
         }
 
         throw new \Exception('Undefined action');
     }
 
     /** @var Controller */
-    private static $_controller;
+    private $_controller;
     /** @var string */
-    private static $_action;
+    private $_action;
 
     /**
      * @param string $controller
      * @return Controller
      * @throws \Exception
      */
-    private static function checkController($controller)
+    private function checkController($controller)
     {
         $controllerDir = __DIR__ . '/../Controller';
         $controller = Helper::id2camel($controller);
@@ -164,7 +120,7 @@ class App
             /** @noinspection PhpIncludeInspection */
             $class = Helper::rTrimWord(__NAMESPACE__, '\\Core') . '\\Controller\\' . $controller . 'Controller';
             if (class_exists($class) && is_subclass_of($class, Controller::class)) {
-                return new $class;
+                return new $class($this->serviceLocator);
             }
         }
 
@@ -175,17 +131,40 @@ class App
      * текущий контроллер
      * @return Controller
      */
-    public static function getController()
+    public function getController()
     {
-        return self::$_controller;
+        return $this->_controller;
     }
 
     /**
      * текущий экшен
      * @return string
      */
-    public static function getAction()
+    public function getAction()
     {
-        return self::$_action;
+        return $this->_action;
+    }
+
+    /** @var App */
+    private static $_app;
+
+    /**
+     * @return ServiceLocator
+     */
+    public static function serviceLocator()
+    {
+        return self::$_app->serviceLocator;
+    }
+
+    /**
+     * запуск приложения на выполнение
+     * @param ServiceLocator $serviceLocator
+     */
+    public static function run($serviceLocator)
+    {
+        if (self::$_app === null) {
+            self::$_app = new self($serviceLocator);
+            self::$_app->go();
+        }
     }
 }

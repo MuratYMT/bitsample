@@ -9,6 +9,9 @@
 namespace BIT\Models\Services;
 
 use BIT\Core\AbstractEntityManager;
+use BIT\Core\App;
+use BIT\Core\Helper;
+use BIT\Models\Entity\Account;
 
 /**
  * Class AccountManager менеджер счетов
@@ -17,22 +20,30 @@ use BIT\Core\AbstractEntityManager;
 class AccountManager extends AbstractEntityManager
 {
     /**
-     * определение баланса стеча
-     * @param $account
-     * @return float
+     * найти счет
+     * @param string $id номер счета
+     * @param bool $lock заблокировать счет
+     * @return Account|null
      */
-    public static function getBalance($account)
+    public function findOne($id, $lock)
     {
-        $operations = OperationManager::findAccountOperation($account);
-        $result = 0.0;
-        foreach ($operations as $operation) {
-            if ($operation->debId === $account) {
-                $result += $operation->amount;
-            } else {
-                $result -= $operation->amount;
-            }
+        $sql = 'SELECT `id`, `balance` 
+        FROM `operations` 
+        WHERE id = :id';
+
+        if ($lock) {
+            $sql .= ' FOR UPDATE';
         }
-        return $result;
+
+        $rows = $this->connection->query($sql, ['id' => $id]);
+        if (count($rows) === 0) {
+            return null;
+        }
+        $row = reset($rows);
+        /** @var Account $obj */
+        $obj = Helper::createObject(AccountManager::class, $row);
+        $obj->setIsNew(false);
+        return $obj;
     }
 
     public static function getEntityTable()

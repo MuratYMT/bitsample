@@ -12,6 +12,9 @@ use BIT\Models\Services\UserManager;
 
 class User
 {
+    /** @var Session */
+    public $session;
+
     private $userId = 0;
 
     /** @var  \BIT\Models\Entity\User */
@@ -40,7 +43,7 @@ class User
 
     public function init()
     {
-        $userId = (int)App::getSession()->get('__USERID', 0);
+        $userId = (int)$this->session->get('__USERID', 0);
 
         if ($userId !== 0) {
             /**
@@ -64,8 +67,8 @@ class User
     {
         $this->identity = $identity;
         $this->userId = $identity->id;
-        App::getSession()->set('__USERID', $this->userId);
-        App::getSession()->regenerateId();
+        $this->session->set('__USERID', $this->userId);
+        $this->session->regenerateId();
     }
 
     /**
@@ -75,8 +78,8 @@ class User
     {
         $this->userId = 0;
         $this->identity = null;
-        App::getSession()->del('__USERID');
-        App::getSession()->regenerateId();
+        $this->session->del('__USERID');
+        $this->session->regenerateId();
     }
 
     /**

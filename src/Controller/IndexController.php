@@ -3,9 +3,11 @@
 namespace BIT\Controller;
 
 use BIT\Core\Alert;
-use BIT\Core\App;
 use BIT\Core\Controller;
 use BIT\Core\Helper;
+use BIT\Core\Request;
+use BIT\Core\ServiceLocator;
+use BIT\Core\User;
 use BIT\Core\View;
 use BIT\Forms\LoginForm;
 use BIT\Forms\ReplenishForm;
@@ -22,6 +24,17 @@ use BIT\Models\Services\UserManager;
  */
 class IndexController extends Controller
 {
+    /** @var Request */
+    public $request;
+    /** @var User */
+    public $user;
+
+    public function __construct(ServiceLocator $serviceLocator)
+    {
+        parent::__construct($serviceLocator);
+        $this->request = $this->serviceLocator->getService('request');
+        $this->user = $this->serviceLocator->getService('user');
+    }
 
     /**
      * вход в аккаунт
@@ -30,12 +43,12 @@ class IndexController extends Controller
     public function indexAction()
     {
         $form = new LoginForm();
-        if (App::getRequest()->isPost() && $form->load(App::getRequest()->post()) && $form->isValid()) {
+        if ($this->request->isPost() && $form->load($this->request->post()) && $form->isValid()) {
             $user = UserManager::findByLogin($form->login);
             if ($user === null || !$user->validatePassword($form->password)) {
                 Alert::show('Неверный пользователь или пароль');
             } else {
-                App::getUser()->login($user);
+                $this->user->login($user);
                 Alert::show('Успешная авторизация');
                 Helper::redirect('/index/account');
             }
@@ -49,14 +62,14 @@ class IndexController extends Controller
      */
     public function accountAction()
     {
-        if (App::getUser()->isGuest()) {
+        if ($this->user->isGuest()) {
             Alert::show('Необходимо авторизоваться');
             Helper::redirect('/');
         }
-        $user = App::getUser()->getIdentity();
+        $user = $this->user->getIdentity();
         $operations = OperationManager::findUserOperation($user);
 
-        return new View(['operations' => $operations, 'user' => $user, 'balance' => AccountManager::getBalance($user->getAccountId())]);
+        return new View(['operations' => $operations, 'user' => $user, 'account' => AccountManager::findOne($user->getAccountId())]);
     }
 
     /**
@@ -65,14 +78,14 @@ class IndexController extends Controller
      */
     public function replenishAction()
     {
-        if (App::getUser()->isGuest()) {
+        if ($this->user->isGuest()) {
             Alert::show('Необходимо авторизоваться');
             Helper::redirect('/');
         }
 
         $form = new ReplenishForm();
-        if (App::getRequest()->isPost() && $form->load(App::getRequest()->post()) && $form->isValid()) {
-            if (OperationManager::replenish(App::getUser()->getIdentity(), $form->amount, $form->account)) {
+        if ($this->request->isPost() && $form->load($this->request->post()) && $form->isValid()) {
+            if (OperationManager::replenish($this->user->getIdentity(), $form->amount, $form->account)) {
                 Alert::show('Сумма ' . $form->amount . ' зачислена на счет');
                 Helper::redirect('/index/account');
             } else {
@@ -89,14 +102,14 @@ class IndexController extends Controller
      */
     public function withdrawalAction()
     {
-        if (App::getUser()->isGuest()) {
+        if ($this->user->isGuest()) {
             Alert::show('Необходимо авторизоваться');
             Helper::redirect('/');
         }
 
-        $form = new WithdrawalForm(App::getUser()->getIdentity());
-        if (App::getRequest()->isPost() && $form->load(App::getRequest()->post()) && $form->isValid()) {
-            if (OperationManager::withdrawal(App::getUser()->getIdentity(), $form->amount, $form->account)) {
+        $form = new WithdrawalForm($this->user->getIdentity());
+        if ($this->request->isPost() && $form->load($this->request->post()) && $form->isValid()) {
+            if (OperationManager::withdrawal($this->user->getIdentity(), $form->amount, $form->account)) {
                 Alert::show('Сумма ' . $form->amount . ' выведена со счета');
                 Helper::redirect('/index/account');
             } else {

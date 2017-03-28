@@ -10,13 +10,16 @@ namespace BIT\Core;
 
 abstract class AbstractEntityManager
 {
+    /** @var Connection */
+    public $connection;
+
     abstract public static function getEntityTable();
 
     /**
      * @param AbstractEntity $entity
      * @return bool
      */
-    public static function save($entity)
+    public function save($entity)
     {
         $refl = new \ReflectionObject($entity);
         $attributes = $refl->getProperties(\ReflectionProperty::IS_PUBLIC);
@@ -48,12 +51,11 @@ abstract class AbstractEntityManager
             WHERE ' . $entity->getId() . '= :' . $entity->getIdValue();
         }
 
-        $connection = App::getConnection();
-        $result = $connection->execute($sql, $params);
+        $result = $this->connection->execute($sql, $params);
         if ($result !== false) {
             if ($entity->isIsNew()) {
                 $pk = $entity->getId();
-                $entity->$pk = $connection->lastInsertId();
+                $entity->$pk = $this->connection->lastInsertId();
                 $entity->setIsNew(false);
             }
 

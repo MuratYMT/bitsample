@@ -6,13 +6,14 @@
  * Time: 11:34
  */
 use BIT\Core\Alert;
+use BIT\Models\Entity\Account;
 use BIT\Models\Entity\Operation;
 use BIT\Models\Entity\User;
 
 /**
  * @var User $user
  * @var Operation[] $operations
- * @var double $balance
+ * @var Account $account
  */
 
 ?>
@@ -21,7 +22,7 @@ use BIT\Models\Entity\User;
 <h1>Счет</h1>
 <?= new Alert() ?>
 <div>
-    <strong>Баланс счета: <?= number_format($balance, 2) ?></strong>
+    <strong>Баланс счета: <?= number_format($account->balance, 2) ?></strong>
 </div>
 <div>
     <a href="/index/replenish">Пополнить</a>

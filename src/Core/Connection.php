@@ -13,6 +13,10 @@ class Connection
     /** @var  \PDO */
     private $pdo;
 
+    public $dsn;
+    public $username;
+    public $password;
+
     public function __construct()
     {
         $this->connect();
@@ -20,12 +24,7 @@ class Connection
 
     private function connect()
     {
-        $conf = App::$config;
-        if (!isset($conf['connection'])) {
-            throw new \Exception();
-        }
-        $conf = $conf['connection'];
-        $this->pdo = new \PDO($conf['dsn'], $conf['username'], $conf['password']);
+        $this->pdo = new \PDO($this->dsn, $this->username, $this->password);
         $this->pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
         $this->pdo->setAttribute(\PDO::MYSQL_ATTR_INIT_COMMAND, "SET NAME'utf8'");
     }

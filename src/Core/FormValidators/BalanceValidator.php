@@ -27,8 +27,8 @@ class BalanceValidator extends AbstractValidator
      */
     public function validate($value)
     {
-        $balance = AccountManager::getBalance($this->account);
-        if ($balance < $value) {
+        $account = AccountManager::findOne($this->account);
+        if ($account->balance < $value) {
             return ['Суума превышает остаток счета'];
         }
         return null;

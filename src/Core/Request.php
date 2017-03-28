@@ -14,6 +14,9 @@ namespace BIT\Core;
  */
 class Request
 {
+    /** @var Session */
+    public $session;
+
     /**
      * каким методом пришел запрос
      * @return string
@@ -104,7 +107,7 @@ class Request
      */
     private function loadCsrfToken()
     {
-        return App::getSession()->get('__CSRFTOKEN');
+        return $this->session->get('__CSRFTOKEN');
     }
 
     /**
@@ -114,7 +117,7 @@ class Request
     private function generateCsrfToken()
     {
         $token = Helper::generateRandomString(16);
-        App::getSession()->set('__CSRFTOKEN', $token);
+        $this->session->set('__CSRFTOKEN', $token);
         return $token;
     }
 }

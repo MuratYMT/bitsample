@@ -3,7 +3,6 @@
 namespace BIT\Models\Services;
 
 use BIT\Core\AbstractEntityManager;
-use BIT\Core\App;
 use BIT\Core\Helper;
 use BIT\Models\Entity\User;
 
@@ -25,10 +24,9 @@ class UserManager extends AbstractEntityManager
      * @param int $userId
      * @return User|null
      */
-    public static function findOne($userId)
+    public function findOne($userId)
     {
-        $connection = App::getConnection();
-        $rows = $connection->query('SELECT id, login, password 
+        $rows = $this->connection->query('SELECT id, login, password 
         FROM `users` 
         WHERE id = :id', ['id' => $userId]);
         if (count($rows) === 0) {
@@ -46,10 +44,9 @@ class UserManager extends AbstractEntityManager
      * @param string $login
      * @return User|null
      */
-    public static function findByLogin($login)
+    public function findByLogin($login)
     {
-        $connection = App::getConnection();
-        $rows = $connection->query('SELECT id, login, password 
+        $rows = $this->connection->query('SELECT id, login, password 
         FROM `users` 
         WHERE login = :login', ['login' => $login]);
         if (count($rows) === 0) {

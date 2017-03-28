@@ -9,7 +9,6 @@
 namespace BIT\Models\Services;
 
 use BIT\Core\AbstractEntityManager;
-use BIT\Core\App;
 use BIT\Core\Helper;
 use BIT\Models\Entity\Operation;
 use BIT\Models\Entity\User;
@@ -24,16 +23,18 @@ class OperationManager extends AbstractEntityManager
     const FEE = 0.01;
     const FEE_ACCOUNT = 'f1';
 
+    /** @var AccountManager */
+    public $accountManager;
+
     /**
      * найти все операции по этому счету
      * @param string $accounId номер счета
      * @return Operation[]
      * @internal param User $user
      */
-    public static function findAccountOperation($accounId)
+    public function findAccountOperation($accounId)
     {
-        $connection = App::getConnection();
-        $rows = $connection->query('SELECT `operationId`, `debId`, `credId`, `amount`, `dateOperation`, `description`
+        $rows = $this->connection->query('SELECT `operationId`, `debId`, `credId`, `amount`, `dateOperation`, `description`
         FROM `operations` 
         WHERE `debId` = :id or `credId` = :id
         ORDER BY `operationId` DESC ', ['id' => $accounId]);
@@ -55,9 +56,9 @@ class OperationManager extends AbstractEntityManager
      * @param User $user
      * @return Operation[]
      */
-    public static function findUserOperation($user)
+    public function findUserOperation($user)
     {
-        return self::findAccountOperation($user->getAccountId());
+        return $this->findAccountOperation($user->getAccountId());
     }
 
     /**
@@ -67,16 +68,32 @@ class OperationManager extends AbstractEntityManager
      * @param string $kredAccount
      * @return bool
      */
-    public static function replenish($user, $amount, $kredAccount)
+    public function replenish($user, $amount, $kredAccount)
     {
-        $operation = new Operation();
-        $operation->debId = $user->getAccountId();
-        $operation->credId = $kredAccount;
-        $operation->amount = $amount;
-        $operation->dateOperation = (new \DateTime())->format('Y-m-d H:i:s');
-        $operation->description = 'Пополение счета пользователя ' . $user->login . ' через ' . $kredAccount;
+        $this->connection->beginTransaction();
+        try {
+            $userAccount = $this->accountManager->findOne($user->getAccountId(), true);
+            $replenishAccount = $this->accountManager->findOne($kredAccount, true);
+            //изменяем баланс счетов
+            $userAccount->balance += $amount;
+            $this->accountManager->save($userAccount);
+            $replenishAccount->balance -= $amount;
+            $this->accountManager->save($replenishAccount);
+            //записываем операцию пополнения
+            $operation = new Operation();
+            $operation->debId = $user->getAccountId();
+            $operation->credId = $kredAccount;
+            $operation->amount = $amount;
+            $operation->dateOperation = (new \DateTime())->format('Y-m-d H:i:s');
+            $operation->description = 'Пополение счета пользователя ' . $user->login . ' через ' . $kredAccount;
 
-        return self::save($operation);
+            $this->save($operation);
+            $this->connection->commit();
+            return true;
+        } catch (\Exception $e) {
+            $this->connection->rollback();
+            return false;
+        }
     }
 
     /**
@@ -86,18 +103,29 @@ class OperationManager extends AbstractEntityManager
      * @param string $debAccount
      * @return bool|int -1 если средств недостаточно
      */
-    public static function withdrawal($user, $amount, $debAccount)
+    public function withdrawal($user, $amount, $debAccount)
     {
-        $connection = App::getConnection();
-        $connection->beginTransaction();
+        $this->connection->beginTransaction();
         try {
+            $fee = $amount * self::FEE;
+
             $date = (new \DateTime())->format('Y-m-d H:i:s');
-            //проверяем соответствие суммы балансу счета
-            if (AccountManager::getBalance($user->getAccountId()) < $amount) {
-                $connection->rollback();
+            $userAccount = $this->accountManager->findOne($user->getAccountId(), true);
+            //проверяем соответствие суммы балансу счета с блокировкой изменения счета
+            if ($userAccount->balance < $amount) {
+                $this->connection->rollback();
                 return false;
             }
-            $fee = $amount * self::FEE;
+
+            $withdrawalAccount = $this->accountManager->findOne($debAccount, true);
+            $feeAccount = $this->accountManager->findOne(self::FEE_ACCOUNT, true);
+            //изменяем баланс счетов
+            $userAccount->balance -= $amount;
+            $this->accountManager->save($userAccount);
+            $withdrawalAccount->balance += $amount - $fee;
+            $this->accountManager->save($withdrawalAccount);
+            $feeAccount->balance += $fee;
+            $this->accountManager->save($feeAccount);
 
             //списываем сумму со счета
             $operation = new Operation();
@@ -106,7 +134,7 @@ class OperationManager extends AbstractEntityManager
             $operation->amount = $amount - $fee;
             $operation->dateOperation = $date;
             $operation->description = 'Вывод средств со счета пользователя ' . $user->login . ' на ' . $debAccount;
-            self::save($operation);
+            $this->save($operation);
 
             //списывааем комиссию
             $feeOperation = new Operation();
@@ -116,12 +144,12 @@ class OperationManager extends AbstractEntityManager
             $feeOperation->dateOperation = $date;
             $feeOperation->description = 'Коммисия за вывод средств со счета пользователя ' . $user->login . ' на ' . $debAccount
                 . '. Референс операции REF' . $operation->operationId;
-            self::save($feeOperation);
+            $this->save($feeOperation);
 
-            $connection->commit();
+            $this->connection->commit();
             return true;
         } catch (\Exception $e) {
-            $connection->rollback();
+            $this->connection->rollback();
             return false;
         }
     }
