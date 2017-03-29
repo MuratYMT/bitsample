@@ -8,8 +8,8 @@
 
 namespace BIT\Models\Services;
 
-use BIT\Core\AbstractEntityManager;
 use BIT\Core\Helper;
+use BIT\Models\AbstractEntityManager;
 use BIT\Models\Entity\Operation;
 use BIT\Models\Entity\User;
 
@@ -22,9 +22,6 @@ class OperationManager extends AbstractEntityManager
     /** удерживаемая коммисия */
     const FEE = 0.01;
     const FEE_ACCOUNT = 'f1';
-
-    /** @var AccountManager */
-    public $accountManager;
 
     /**
      * найти все операции по этому счету
@@ -70,21 +67,23 @@ class OperationManager extends AbstractEntityManager
      */
     public function replenish($user, $amount, $kredAccount)
     {
+        /** @var AccountManager $accountManager */
+        $accountManager = $this->entityManager->getManager(AccountManager::class);
         $this->connection->beginTransaction();
         try {
-            $userAccount = $this->accountManager->findOne($user->getAccountId(), true);
-            $replenishAccount = $this->accountManager->findOne($kredAccount, true);
+            $userAccount = $accountManager->findOne($user->getAccountId(), true);
+            $replenishAccount = $accountManager->findOne($kredAccount, true);
             //изменяем баланс счетов
             $userAccount->balance += $amount;
-            $this->accountManager->save($userAccount);
+            $accountManager->save($userAccount);
             $replenishAccount->balance -= $amount;
-            $this->accountManager->save($replenishAccount);
+            $accountManager->save($replenishAccount);
             //записываем операцию пополнения
             $operation = new Operation();
             $operation->debId = $user->getAccountId();
             $operation->credId = $kredAccount;
             $operation->amount = $amount;
-            $operation->dateOperation = (new \DateTime())->format('Y-m-d H:i:s');
+            $operation->dateOperation = time();
             $operation->description = 'Пополение счета пользователя ' . $user->login . ' через ' . $kredAccount;
 
             $this->save($operation);
@@ -105,27 +104,29 @@ class OperationManager extends AbstractEntityManager
      */
     public function withdrawal($user, $amount, $debAccount)
     {
+        /** @var AccountManager $accountManager */
+        $accountManager = $this->entityManager->getManager(AccountManager::class);
         $this->connection->beginTransaction();
         try {
             $fee = $amount * self::FEE;
 
-            $date = (new \DateTime())->format('Y-m-d H:i:s');
-            $userAccount = $this->accountManager->findOne($user->getAccountId(), true);
+            $date = time();
+            $userAccount = $accountManager->findOne($user->getAccountId(), true);
             //проверяем соответствие суммы балансу счета с блокировкой изменения счета
             if ($userAccount->balance < $amount) {
                 $this->connection->rollback();
                 return false;
             }
 
-            $withdrawalAccount = $this->accountManager->findOne($debAccount, true);
-            $feeAccount = $this->accountManager->findOne(self::FEE_ACCOUNT, true);
+            $withdrawalAccount = $accountManager->findOne($debAccount, true);
+            $feeAccount = $accountManager->findOne(self::FEE_ACCOUNT, true);
             //изменяем баланс счетов
             $userAccount->balance -= $amount;
-            $this->accountManager->save($userAccount);
+            $accountManager->save($userAccount);
             $withdrawalAccount->balance += $amount - $fee;
-            $this->accountManager->save($withdrawalAccount);
+            $accountManager->save($withdrawalAccount);
             $feeAccount->balance += $fee;
-            $this->accountManager->save($feeAccount);
+            $accountManager->save($feeAccount);
 
             //списываем сумму со счета
             $operation = new Operation();

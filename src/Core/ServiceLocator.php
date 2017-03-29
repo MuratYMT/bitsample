@@ -8,14 +8,16 @@
 
 namespace BIT\Core;
 
+use BIT\Core\Services\Factory\AbstractFactory;
+
 class ServiceLocator
 {
     /** @var array */
-    private $config = [];
+    private $config;
 
     private $services = [];
 
-    public function __construct($config = [])
+    public function __construct(array $config = [])
     {
         $this->config = $config;
     }

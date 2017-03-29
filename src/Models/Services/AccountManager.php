@@ -8,9 +8,8 @@
 
 namespace BIT\Models\Services;
 
-use BIT\Core\AbstractEntityManager;
-use BIT\Core\App;
 use BIT\Core\Helper;
+use BIT\Models\AbstractEntityManager;
 use BIT\Models\Entity\Account;
 
 /**
@@ -28,7 +27,7 @@ class AccountManager extends AbstractEntityManager
     public function findOne($id, $lock)
     {
         $sql = 'SELECT `id`, `balance` 
-        FROM `operations` 
+        FROM `accounts` 
         WHERE id = :id';
 
         if ($lock) {
@@ -41,7 +40,7 @@ class AccountManager extends AbstractEntityManager
         }
         $row = reset($rows);
         /** @var Account $obj */
-        $obj = Helper::createObject(AccountManager::class, $row);
+        $obj = Helper::createObject(Account::class, $row);
         $obj->setIsNew(false);
         return $obj;
     }

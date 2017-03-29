@@ -2,6 +2,8 @@
 
 namespace BIT\Core;
 
+use BIT\Core\Services\View;
+
 /**
  * Created by PhpStorm.
  * User: murat
@@ -19,5 +21,13 @@ class Controller
     public function __construct($serviceLocator)
     {
         $this->serviceLocator = $serviceLocator;
+    }
+
+    /**
+     * @return View
+     */
+    public function getView()
+    {
+        return $this->serviceLocator->getService('view');
     }
 }

@@ -42,7 +42,7 @@ use BIT\Models\Entity\User;
         <tr>
             <td>REF<?= $operation->operationId ?></td>
             <td><?= $operation->description ?></td>
-            <td><?= $operation->dateOperation ?></td>
+            <td><?= (new \DateTime('@'.$operation->dateOperation))->format('Y-m-d H:i:s') ?></td>
             <td><?= number_format($operation->debId === $user->getAccountId() ? $operation->amount : -$operation->amount, 2) ?></td>
         </tr>
     <?php endforeach; ?>

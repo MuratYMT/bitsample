@@ -8,10 +8,10 @@
 use BIT\Core\Alert;
 use BIT\Core\FormHelpers\Form;
 use BIT\Core\FormHelpers\FormElement;
-use BIT\Forms\WithdrawalForm;
+use BIT\Forms\WithdrawalAbstractForm;
 
 /**
- * @var $form WithdrawalForm
+ * @var $form WithdrawalAbstractForm
  */
 
 ?>

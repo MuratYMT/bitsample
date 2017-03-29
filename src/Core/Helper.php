@@ -2,6 +2,8 @@
 
 namespace BIT\Core;
 
+use BIT\Forms\AbstractForm;
+
 /**
  * Created by PhpStorm.
  * User: murat
@@ -31,13 +33,23 @@ class Helper
      * @param array $config key-value массив значений атрибутов объекта
      * @return mixed
      */
-    public static function createObject($class, $config = [])
+    public static function createObject($class, array $config = [])
     {
         $obj = new $class;
-        foreach ($config as $param => $value) {
-            $obj->$param = $value;
-        }
+        self::configureObject($obj, $config);
         return $obj;
+    }
+
+    /**
+     * конфигурирует объект
+     * @param mixed $object
+     * @param array $config
+     */
+    public static function configureObject($object, array $config = [])
+    {
+        foreach ($config as $param => $value) {
+            $object->$param = $value;
+        }
     }
 
     /**
@@ -75,7 +87,7 @@ class Helper
 
     /**
      * генерирует имя элемента формы
-     * @param Form $form форма
+     * @param AbstractForm $form форма
      * @param string $element элемент
      * @return string
      */

@@ -8,9 +8,9 @@
 
 namespace BIT\Core\FormHelpers;
 
-use BIT\Core\Form;
-use BIT\Core\FormElements\Button;
+use BIT\Core\Form\Elements\Button;
 use BIT\Core\Helper;
+use BIT\Forms\AbstractForm;
 
 /**
  * Class FormElement хелпер отрисовки элементов форм
@@ -18,7 +18,7 @@ use BIT\Core\Helper;
  */
 class FormElement
 {
-    /** @var  Form */
+    /** @var  AbstractForm */
     protected $form;
     /** @var  string */
     protected $element;
@@ -31,7 +31,7 @@ class FormElement
     }
 
     /**
-     * @param Form $form
+     * @param AbstractForm $form
      * @param string $element
      * @param array $options опции
      */
@@ -57,6 +57,8 @@ class FormElement
                 return $this->textInput('password');
             case 'button':
                 return $this->button();
+            default:
+                return '';
         }
     }
 

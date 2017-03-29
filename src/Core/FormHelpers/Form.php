@@ -4,6 +4,7 @@ namespace BIT\Core\FormHelpers;
 
 use BIT\Core\App;
 use BIT\Core\Helper;
+use BIT\Core\Services\Request;
 
 /**
  * Created by PhpStorm.
@@ -20,17 +21,20 @@ class Form
 {
     /**
      * начало формы
-     * @param \BIT\Core\Form $form
+     * @param \BIT\Forms\AbstractForm $form
      * @param array $options
      * @return string
      */
-    public static function begin($form, $options = [])
+    public static function begin($form, array $options = [])
     {
+        /** @var Request $request */
+        $request = App::serviceLocator()->getService('request');
+
         $options['method'] = $form->getMethod();
 
         $result = '<form ' . Helper::renderTagAttributes($options) . '>';
         if (strtolower($form->getMethod()) === 'post') {
-            $result .= '<input name="__CSRF" type="hidden" value="' . App::getRequest()->getCsrfToken() . '">';
+            $result .= '<input name="__CSRF" type="hidden" value="' . $request->getCsrfToken() . '">';
         }
         return $result;
     }

@@ -2,8 +2,8 @@
 
 namespace BIT\Models\Services;
 
-use BIT\Core\AbstractEntityManager;
 use BIT\Core\Helper;
+use BIT\Models\AbstractEntityManager;
 use BIT\Models\Entity\User;
 
 /**
@@ -56,6 +56,28 @@ class UserManager extends AbstractEntityManager
         $obj = Helper::createObject(User::class, $row);
         $obj->setIsNew(false);
         return $obj;
+    }
+
+    /**
+     * хеширование введенного пароля
+     * генерируешь
+     * @param User $user
+     * @param string $password
+     */
+    public static function setPassword($user, $password)
+    {
+        $user->password = password_hash($password, PASSWORD_DEFAULT);
+    }
+
+    /**
+     * проверка введеного пароля
+     * @param User $user
+     * @param string $password
+     * @return bool
+     */
+    public function validatePassword($user, $password)
+    {
+        return password_verify($password, $user->password);
     }
 
     public static function getEntityTable()

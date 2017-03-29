@@ -8,10 +8,10 @@
 use BIT\Core\Alert;
 use BIT\Core\FormHelpers\Form;
 use BIT\Core\FormHelpers\FormElement;
-use BIT\Forms\ReplenishForm;
+use BIT\Forms\ReplenishAbstractForm;
 
 /**
- * @var $form ReplenishForm
+ * @var $form ReplenishAbstractForm
  */
 
 ?>

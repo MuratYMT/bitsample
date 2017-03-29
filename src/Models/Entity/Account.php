@@ -8,7 +8,7 @@
 
 namespace BIT\Models\Entity;
 
-use BIT\Core\AbstractEntity;
+use BIT\Models\AbstractEntity;
 
 class Account extends AbstractEntity
 {

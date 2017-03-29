@@ -8,6 +8,10 @@
 
 namespace BIT\Core;
 
+use BIT\Core\Form\Filters\AbstractFilter;
+use BIT\Core\Form\Validators\AbstractValidator;
+use BIT\Forms\AbstractForm;
+
 class InputFilter
 {
     /**
@@ -18,7 +22,7 @@ class InputFilter
     const VALIDATORS = 'validators';
     private $validators = [];
     /**
-     * @var Form
+     * @var AbstractForm
      */
     private $form;
 

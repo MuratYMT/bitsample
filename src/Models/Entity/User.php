@@ -2,7 +2,7 @@
 
 namespace BIT\Models\Entity;
 
-use BIT\Core\AbstractEntity;
+use BIT\Models\AbstractEntity;
 
 /**
  * Created by PhpStorm.
@@ -40,24 +40,5 @@ class User extends AbstractEntity
     public function getAccountId()
     {
         return 'u' . $this->id;
-    }
-
-    /**
-     * генерируешь
-     * @param $password
-     * @return bool|string
-     */
-    public static function generatePassword($password)
-    {
-        return password_hash($password, PASSWORD_DEFAULT);
-    }
-
-    /**
-     * @param $password
-     * @return bool
-     */
-    public function validatePassword($password)
-    {
-        return password_verify($password, $this->password);
     }
 }

@@ -8,6 +8,8 @@
 
 namespace BIT\Core;
 
+use BIT\Core\Services\Session;
+
 /**
  * Class Alert флеш сообщения
  * @package BIT\Core
@@ -21,7 +23,9 @@ class Alert
 
     public function render()
     {
-        $flashes = App::getSession()->getFlash();
+        /** @var Session $request */
+        $session = App::serviceLocator()->getService('session');
+        $flashes = $session->getFlash();
 
         $result = '';
         foreach ($flashes as $flash) {
@@ -36,6 +40,8 @@ class Alert
      */
     public static function show($alert)
     {
-        App::getSession()->addFlash($alert);
+        /** @var Session $request */
+        $session = App::serviceLocator()->getService('session');
+        $session->addFlash($alert);
     }
 }
