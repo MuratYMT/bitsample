@@ -11,54 +11,21 @@ namespace BIT\Core\Services;
 class Session
 {
     private $session;
+    private $started = false;
 
     public function __construct()
     {
         $this->open();
-        register_shutdown_function([$this, 'close']);
+        register_shutdown_function([$this, 'open']);
     }
 
     /**
-     * старт сесии
+     * старт сесии, так же вызывается при окончании работы скрипта
      */
     public function open()
     {
-        session_start();
-        $this->session = $_SESSION;
-
-
-        if (isset($this->session['__destroyed'])) {
-            if ($this->session['__destroyed'] < time() - 3600) {
-                //с последнего обращения прошло больше часа разлогиниваем
-                session_unset();
-            }
-        } else {
-            //попытка фиксации сесссии ?
-            $this->regenerateId();
-        }
-
-        $this->session['__destroyed'] = time();
-        session_write_close();
-    }
-
-    /**
-     * регенерирует ид сессии
-     */
-    public function regenerateId()
-    {
-        session_regenerate_id(true);
-    }
-
-    /**
-     * записать данные в хранилище закрыть сесиию
-     */
-    public function close()
-    {
-        ini_set('session.use_cookies', false);
-        ini_set('session.cache_limiter', null);
-        session_start();
-        $_SESSION = $this->session;
-        session_write_close();
+        $this->start();
+        $this->close();
     }
 
     /**
@@ -117,6 +84,43 @@ class Session
             return $flash;
         }
         return [];
+    }
+
+    private function start()
+    {
+        if ($this->started) {
+            //сессия уже стартовала в этом сеансе, блокируем повторную отправку куки
+            ini_set('session.use_cookies', false);
+            ini_set('session.cache_limiter', null);
+        }
+
+        session_start();
+
+        if (!$this->started) {
+            $this->started = true;
+            //первичный старт
+            $this->session = $_SESSION;
+            if (isset($this->session['__destroyed'])) {
+                if ($this->session['__destroyed'] < time() - 3600) {
+                    //с последнего обращения прошло больше часа разлогиниваем
+                    session_unset();
+                }
+            } else {
+                //попытка фиксации сесссии ?
+                session_regenerate_id(true);
+            }
+
+            $this->session['__destroyed'] = time();
+        }
+    }
+
+    /**
+     * записать данные в хранилище закрыть сесиию
+     */
+    private function close()
+    {
+        $_SESSION = $this->session;
+        session_write_close();
     }
 
     /**

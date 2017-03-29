@@ -76,7 +76,6 @@ class User
         $this->identity = $identity;
         $this->userId = $identity->id;
         $this->session->set('__USERID', $this->userId);
-        $this->session->regenerateId();
     }
 
     /**
@@ -87,7 +86,6 @@ class User
         $this->userId = 0;
         $this->identity = null;
         $this->session->del('__USERID');
-        $this->session->regenerateId();
     }
 
     /**
