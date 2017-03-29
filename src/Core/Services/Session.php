@@ -25,7 +25,7 @@ class Session
     {
         session_start();
         $this->session = $_SESSION;
-        session_write_close();
+
 
         if (isset($this->session['__destroyed'])) {
             if ($this->session['__destroyed'] < time() - 3600) {
@@ -38,6 +38,7 @@ class Session
         }
 
         $this->session['__destroyed'] = time();
+        session_write_close();
     }
 
     /**
@@ -53,6 +54,8 @@ class Session
      */
     public function close()
     {
+        ini_set('session.use_cookies', false);
+        ini_set('session.cache_limiter', null);
         session_start();
         $_SESSION = $this->session;
         session_write_close();
